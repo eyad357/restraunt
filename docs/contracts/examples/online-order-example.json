@@ -1,0 +1,64 @@
+{
+  "_comment": "Illustrates the Phase 00 clarification in order-lifecycle-contract.md: an ONLINE order has operator_id = null because no staff member created it, and no fake CASHIER/OWNER account or Customer entity is introduced to fill that field.",
+  "data": {
+    "id": "aaaa1111-1111-1111-1111-111111111111",
+    "branch_id": "11111111-1111-1111-1111-111111111111",
+    "source": "ONLINE",
+    "type": "TAKEAWAY",
+    "status": "PLACED",
+    "operator_id": null,
+    "notes": null,
+    "subtotal": "70.00",
+    "total": "70.00",
+    "scheduled_for": null,
+    "created_at": "2026-09-19T18:00:00Z",
+    "updated_at": "2026-09-19T18:00:00Z",
+    "completed_at": null,
+    "cancelled_at": null,
+    "items": [
+      {
+        "id": "bbbb2222-2222-2222-2222-222222222222",
+        "order_id": "aaaa1111-1111-1111-1111-111111111111",
+        "product_id": "44444444-4444-4444-4444-444444444444",
+        "variant_id": "55555555-5555-5555-5555-555555555555",
+        "quantity": 1,
+        "unit_price": "70.00",
+        "notes": null,
+        "line_total": "70.00",
+        "modifiers": []
+      }
+    ],
+    "payments": [
+      {
+        "id": "cccc3333-3333-3333-3333-333333333333",
+        "order_id": "aaaa1111-1111-1111-1111-111111111111",
+        "method": "CARD",
+        "amount": "70.00",
+        "recorded_by": null,
+        "recorded_at": "2026-09-19T18:00:01Z"
+      }
+    ],
+    "delivery": null,
+    "kitchen_state": {
+      "id": "dddd4444-4444-4444-4444-444444444444",
+      "order_id": "aaaa1111-1111-1111-1111-111111111111",
+      "status": "RECEIVED",
+      "received_at": "2026-09-19T18:00:01Z",
+      "preparing_at": null,
+      "ready_at": null,
+      "completed_at": null
+    },
+    "payment_status": "PAID",
+    "payment_method_display": "CARD"
+  },
+  "audit_entry_for_order_created": {
+    "id": "eeee5555-5555-5555-5555-555555555555",
+    "actor_id": null,
+    "branch_id": "11111111-1111-1111-1111-111111111111",
+    "action": "ORDER_CREATED",
+    "entity_type": "Order",
+    "entity_id": "aaaa1111-1111-1111-1111-111111111111",
+    "metadata": { "source": "ONLINE" },
+    "created_at": "2026-09-19T18:00:00Z"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "One or more fields failed validation.",
+    "details": {
+      "fields": {
+        "quantity": "must be >= 1",
+        "opening_cash": "must be a non-negative decimal string"
+      }
+    }
+  }
+}
