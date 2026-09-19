@@ -1,940 +1,557 @@
-# SmartHorse — Phase B: Professional Dashboard Implementation
+You are responsible for implementing **PHASE 00 — ARCHITECTURE & TECHNICAL CONTRACTS** of this repository.
 
-You are the implementation engineer for the SmartHorse frontend.
+Repository:
+`eyad357/restraunt`
 
-You are continuing from the existing SmartHorse Frontend Phase A implementation.
+Current branch:
+`phase-00-foundation`
 
-I am providing you with the current project ZIP. **Do not rebuild the project from scratch. Inspect the existing codebase first and continue from the current implementation.**
+IMPORTANT:
+Before doing anything, inspect the entire repository and read:
 
-Your task is to implement **Phase B — Dashboard** using realistic Mock Data only.
+`RESTAURANT_SYSTEM_MASTER_SPEC.md`
 
----
+This file is the SINGLE SOURCE OF TRUTH for the project.
 
-# 1. SOURCE OF TRUTH
+Do NOT start building the frontend.
+Do NOT start building the backend.
+Do NOT create mock application screens.
+Do NOT implement business features yet.
 
-Before writing code:
+Your job is to convert the Master Spec into a concrete, implementation-ready technical contract that two developers can use independently without creating incompatible code.
 
-1. Inspect the entire existing frontend structure.
-2. Read the existing README and relevant documentation if available.
-3. Inspect the current:
+## PHASE 00 OBJECTIVE
 
-   * Layout
-   * Sidebar
-   * Topbar
-   * Navigation
-   * Design system
-   * Components
-   * Authentication UI
-   * Routing
-   * Styling
-   * Mock services
-   * Types
-   * Tests
-4. Preserve the architecture and conventions already established in Phase A.
-5. Do not replace working Phase A code unnecessarily.
+Create the complete technical foundation/contracts for the Restaurant Management System.
 
-The existing implementation is the baseline.
+The result must define:
 
-If something already exists and can be reused, **reuse it instead of creating a duplicate implementation.**
+1. System architecture
+2. Module boundaries
+3. Ownership boundaries
+4. Shared entities
+5. Enums
+6. TypeScript contracts
+7. API conventions
+8. Database/domain relationships
+9. Error format
+10. Pagination/filter conventions
+11. Authentication/session contracts
+12. Branch context
+13. Money/Decimal rules
+14. Order lifecycle
+15. Payment lifecycle
+16. Cashier shift lifecycle
+17. Inventory lifecycle
+18. Delivery lifecycle
+19. Kitchen lifecycle
+20. Printing abstraction
+21. Notification contracts
+22. Audit-log contracts
+23. Reporting contracts
+24. Localization/RTL conventions
+25. Offline-readiness rules
+26. Testing conventions
+27. Git/integration rules
+28. Clear boundaries between Person 1 and Person 2
 
----
+## IMPORTANT ARCHITECTURAL RULES
 
-# 2. CURRENT PHASE
+The project is a MODULAR MONOLITH.
 
-We are now implementing:
+Do NOT design microservices.
 
-## Phase B — Dashboard
+Frontend:
 
-The goal is to create a polished, professional, simple, user-friendly SmartHorse Dashboard using Mock Data.
+* React
+* TypeScript
+* RTL-first
+* Arabic + English
+* Arabic is the primary UI language
+* EGP only
+* Strong typing
 
-The Dashboard should feel like a real production SaaS application even though the data is currently mocked.
+Backend:
 
-The user should be able to understand the important Farm information quickly without feeling overwhelmed.
-
----
-
-# 3. IMPORTANT SCOPE RULE
-
-This phase is FRONTEND ONLY.
-
-DO NOT implement:
-
-* Backend
-* ASP.NET Core
-* Database
+* FastAPI
+* Python
 * PostgreSQL
-* EF Core
-* Redis
-* JWT backend
-* Real authentication
-* Real authorization
-* Real API calls
-* API endpoints
-* Database migrations
-* AI
-* Flutter
-* Real-time infrastructure
-* External services
+* SQLAlchemy
+* JWT/session-based authentication
 
-Use Mock Data only.
+Financial values:
 
-However, structure the Dashboard so that the Mock Data can later be replaced with `/api/v1` services without redesigning the UI.
+* PostgreSQL NUMERIC/Decimal
+* NEVER use floating point for money
 
----
+Authentication:
 
-# 4. DESIGN GOAL
+* Owner
+* Cashier
 
-The Dashboard must be:
+PINs must never be stored in plaintext.
 
-* Modern
-* Professional
-* Clean
-* Simple
-* Easy to understand
-* Visually balanced
-* Responsive
-* Accessible
-* Consistent with the existing SmartHorse design
-* Suitable for a real horse/farm management SaaS product
+Drivers are operational actors for delivery and driver performance.
+They are NOT required to become authenticated system users in MVP.
 
-Avoid:
+Customers are NOT a CRM domain.
+Do not create unnecessary customer accounts, loyalty, customer history, or marketing entities.
 
-* Excessive gradients
-* Excessive animations
-* Glassmorphism
-* Huge shadows
-* Too many colors
-* Visual clutter
-* Overly complicated charts
-* Too many cards
-* Tiny text
-* Dense tables
-* Decorative UI that does not provide useful information
+Printing must be behind an abstraction.
+Business logic must NOT depend directly on printer implementation.
 
-The design should communicate:
+No permanent fake/static production data.
 
-**Professional farm management + modern SaaS + simplicity.**
+Temporary mocks are allowed later only when they implement the exact same contracts as the real backend.
 
----
+## CORE ORDER MODEL
 
-# 5. DASHBOARD STRUCTURE
+The contract must clearly distinguish:
 
-Create a complete Dashboard page.
+Order Source:
 
-A recommended structure is:
+* CASHIER
+* PHONE
+* ONLINE
 
-```text
-Dashboard
-│
-├── Header
-│   ├── Page title
-│   ├── Short description
-│   └── Optional Farm/Workspace selector
-│
-├── Summary Cards
-│   ├── Total Horses
-│   ├── Upcoming Visits
-│   ├── Vaccinations
-│   └── Pending Tasks
-│
-├── Main Dashboard Grid
-│
-│   ├── Horse Activity
-│   │
-│   └── Upcoming Tasks
-│
-├── Secondary Dashboard Grid
-│
-│   ├── Health Overview
-│   │
-│   └── Recent Notifications
-│
-└── Optional useful section
-    └── Recent Horse Activity / Quick Actions
-```
+Order Type:
 
-Do not blindly implement every section if it makes the UI crowded.
+* TAKEAWAY
+* PICKUP
+* DELIVERY
+* PRE_ORDER
 
-Use good UX judgment.
+An order must support:
 
-The Dashboard should prioritize the information that is most useful to the user.
+* branch
+* source
+* type
+* status
+* items
+* item variants
+* item modifiers
+* item notes
+* order notes
+* payment(s)
+* totals
+* timestamps
+* cashier/operator
+* optional delivery information
+* kitchen state
 
----
+Product structure:
 
-# 6. DASHBOARD HEADER
+Category
+→ Product
+→ Variant
+→ Modifier
 
-Create a professional header.
+Examples:
+
+Product:
+Burger
+
+Variant:
+Single / Double / Triple
+
+Modifiers:
+Extra cheese
+No onion
+Extra sauce
+
+The system must preserve the selected configuration of every order item.
+
+## PAYMENT CONTRACT
+
+Support:
+
+* CASH
+* CARD
+* WALLET
+* INSTAPAY
+* MIXED
+
+Mixed payment must support multiple payment components for one order.
+
+Do not implement a complex accounting engine.
+
+## CASHIER SHIFT CONTRACT
+
+Define:
+
+OPEN
+→ ACTIVE
+→ CLOSING
+→ CLOSED
+
+The closing calculation must support:
+
+Opening cash
+
+* cash sales
+
+- cash expenses
+  = expected cash
+
+Then compare expected cash against actual counted cash and record the difference.
+
+## DELIVERY CONTRACT
+
+Keep delivery intentionally simple.
+
+No:
+
+* GPS
+* delivery zones
+* complex routing
+* fleet management
+* driver accounts
+* advanced logistics
+
+Support:
+
+* driver assignment
+* delivery status
+* amount expected from driver
+* delivered/returned state
+* driver performance metrics
+
+Delivery cash must be reflected in end-of-day reconciliation.
+
+## INVENTORY CONTRACT
+
+Simple inventory only.
+
+Support:
+
+* inventory item
+* current quantity
+* unit
+* minimum/low-stock threshold
+* stock adjustment
+* low-stock state
+* inventory value
+
+Do NOT create:
+
+* supplier management
+* purchase orders
+* procurement workflows
+* complex warehouse management
+* full recipe/BOM engine
+
+## EXPENSE CONTRACT
+
+Simple expense records.
 
 Example:
+Bread — 20 EGP
 
-```text
-Dashboard
+Expenses must be reflected in:
 
-Good morning, Ahmed.
-Here's what's happening at your farm today.
-```
+* cashier closing
+* reports
+* profit calculation
 
-If the current application architecture supports a Farm/Workspace concept, add a subtle workspace selector.
+## REPORTING CONTRACT
 
-Example:
+Define contracts for:
 
-```text
-Green Valley Farm ▾
-```
+* Daily Sales
+* Weekly Sales
+* Monthly Sales
+* Top Products
+* Least Selling Products
+* Food Cost
+* Inventory Value
+* Expenses
+* Profit
+* Cashier Performance
+* Driver Performance
+* Kitchen Performance
 
-Do not invent complex farm functionality.
+Important:
+The MVP must not invent a complex accounting/COGS system.
 
-For now it can be Mock Data / visual only.
+If Food Cost cannot be calculated reliably without recipe/BOM data, define the contract as extensible and explicitly document what is available in MVP rather than inventing fake calculations.
 
----
+## KITCHEN CONTRACT
 
-# 7. SUMMARY CARDS
+No complex KDS is required.
 
-Create polished summary cards.
+Support:
 
-Suggested cards:
+Order received
+→ Preparing
+→ Ready
+→ Completed
 
-### Total Horses
+Kitchen performance should be measurable from timestamps.
 
-Example:
+Kitchen notes must include:
 
-```text
-42
-Total Horses
+* order notes
+* item notes
+* selected modifiers/configuration
 
-+4.8%
-vs last month
-```
+## NOTIFICATIONS
 
-### Upcoming Visits
+MVP notification types:
 
-```text
-5
-Upcoming Visits
+* ORDER_READY
+* LOW_STOCK
 
-Next: Tomorrow
-```
+Keep notifications simple.
 
-### Vaccinations
+## PRINTING
 
-```text
-8
-Vaccinations
+Define a PrintService abstraction supporting:
 
-3 due this week
-```
+* Customer receipt
+* Kitchen ticket
+* Delivery receipt
+* End-of-day report
+* Cashier closing
 
-### Pending Tasks
+Target formats:
 
-```text
-12
-Pending Tasks
+* Thermal 58mm
+* Thermal 80mm
+* A4
 
-4 due today
-```
+Do not tie domain logic to a specific printer library.
 
-Use realistic mock values.
+## AUDIT LOG
 
-Do not imply that these values come from a real backend.
+Define an audit contract covering at minimum:
 
-Each card should have:
+* login
+* order created
+* order cancelled
+* payment recorded
+* expense created
+* inventory updated
+* menu/product changed
+* price changed
+* settings changed
+* shift opened
+* shift closed
 
-* Clear title
-* Large readable value
-* Optional supporting information
-* Appropriate icon
-* Optional trend/status
-* Good spacing
-* Good responsive behavior
+Include actor, branch, timestamp, action, entity, entity ID, and relevant metadata.
 
-Do not overload the cards.
+## MULTI-BRANCH
 
----
+The architecture must be multi-branch from day one.
 
-# 8. HORSE ACTIVITY
+Operational data such as:
 
-Create a useful Horse Activity section.
+* orders
+* inventory
+* expenses
+* cashier shifts
+* kitchen activity
+* delivery
+* reports
 
-It can use a chart if the existing project already has an approved chart library.
+must be branch-aware.
 
-If a chart library is not installed:
+## OFFLINE READINESS
 
-* First inspect the project dependencies.
-* Prefer an existing dependency if suitable.
-* Do not introduce a large unnecessary library.
+Do not build a complicated distributed synchronization system in Phase 00.
 
-The chart should communicate useful information such as:
+However, the contracts must be designed so the core cashier/order workflow can later operate during temporary internet loss.
 
-```text
-Horse Activity
+Define:
 
-Mon   Tue   Wed   Thu   Fri   Sat   Sun
-```
+* local persistence boundary
+* operation identifiers/idempotency expectations
+* sync-ready API conventions
 
-Possible metrics:
+Do not implement the offline engine yet.
 
-* Training sessions
-* Horse activity
-* Visits
-* Performance/activity count
+## DATABASE RULES
 
-Use realistic Mock Data.
+Define canonical entities and relationships.
 
-The chart must be:
+Avoid duplicate representations of the same domain entity.
 
-* Easy to understand
-* Responsive
-* Visually clean
-* Accessible
-* Not overloaded with multiple datasets unless necessary
+All IDs should use UUIDs unless a documented reason exists otherwise.
 
----
+Use timestamps consistently.
 
-# 9. UPCOMING TASKS
+Money must use Decimal/NUMERIC.
 
-Create an Upcoming Tasks section.
+Foreign-key relationships must be explicit.
 
-Example:
+Branch ownership must be explicit for operational entities.
 
-```text
-Upcoming Tasks
+## TYPESCRIPT CONTRACTS
 
-Vaccination
-Luna
-Today · 10:00 AM
+Create shared TypeScript domain contracts/interfaces for the major domains.
 
-Veterinary Check
-Thunder
-Tomorrow · 9:30 AM
+They must be implementation-neutral.
 
-Training Session
-Shadow
-Tomorrow · 4:00 PM
-```
+Do NOT copy backend ORM models directly into frontend types.
 
-Each task should have:
+## API CONTRACT
 
-* Task type
-* Horse/person/entity where appropriate
-* Date/time
-* Status
-* Optional priority
+Define:
 
-Use subtle visual indicators.
+* URL/versioning convention
+* request format
+* response format
+* error format
+* pagination
+* filtering
+* sorting
+* authentication headers/session behavior
+* idempotency expectations where required
+* branch context
 
-Do not use excessive colors.
+Use consistent naming.
 
-Possible statuses:
+## MODULE OWNERSHIP
 
-* Upcoming
-* Due Today
-* Overdue
-* Completed
+Person 1 owns:
 
-The Dashboard can display only the most important upcoming items.
+* Authentication
+* Branches
+* Menu
+* Categories
+* Products
+* Variants
+* Modifiers
+* Orders
+* Payments
+* Kitchen
+* Printing
 
-Provide a clear action such as:
+Person 2 owns:
 
-```text
-View all
-```
-
-The action can remain UI-only for now if the destination functionality is not implemented.
-
----
-
-# 10. HEALTH OVERVIEW
-
-Create a simple Health Overview section.
-
-Example metrics:
-
-```text
-Health Overview
-
-Vaccinations       8
-Medical Visits     5
-Active Treatments  3
-Follow-ups         2
-```
-
-You can use:
-
-* Progress indicators
-* Small statistics
-* Simple visual breakdown
-
-Keep it simple.
-
-The user should understand the health status at a glance.
-
-Do not invent medical claims.
-
-This is UI Mock Data only.
-
----
-
-# 11. RECENT NOTIFICATIONS
-
-Create a Recent Notifications section.
-
-Example:
-
-```text
-Recent Notifications
-
-Vaccination reminder
-Luna is due for vaccination
-10 minutes ago
-
-Veterinary appointment
-Appointment scheduled for Thunder
-1 hour ago
-
-Training reminder
-Shadow's training session starts at 4 PM
-2 hours ago
-```
-
-Use realistic notification categories.
-
-Keep the list visually compact.
-
----
-
-# 12. QUICK ACTIONS
-
-If appropriate, add a small Quick Actions section.
-
-Possible actions:
-
-```text
-Add Horse
-Create Task
-Schedule Visit
-Add Training Session
-```
-
-However:
-
-**Do not create functionality that does not exist yet.**
-
-For this phase these may simply be UI buttons/placeholders.
-
-Only add this section if it improves the Dashboard UX.
-
----
-
-# 13. MOCK DATA ARCHITECTURE
-
-Do NOT hardcode random values directly inside JSX components.
-
-Create a clean mock data layer.
-
-For example:
-
-```text
-features/dashboard/
-├── components/
-│   ├── DashboardHeader.tsx
-│   ├── SummaryCard.tsx
-│   ├── HorseActivity.tsx
-│   ├── UpcomingTasks.tsx
-│   ├── HealthOverview.tsx
-│   ├── RecentNotifications.tsx
-│   └── QuickActions.tsx
-│
-├── mock/
-│   └── dashboard-mock-data.ts
-│
-├── types.ts
-└── dashboard-service.ts
-```
-
-Adapt this structure to the existing project's conventions.
-
-Prefer:
-
-```text
-UI
- ↓
-Dashboard service abstraction
- ↓
-Mock data
-```
-
-Later it should be possible to change:
-
-```text
-MockDashboardService
-```
-
-to:
-
-```text
-ApiDashboardService
-```
-
-without rewriting the UI.
-
----
-
-# 14. TYPE SAFETY
-
-Use TypeScript types/interfaces for Dashboard data.
-
-For example:
-
-```text
-DashboardSummary
-HorseActivity
-UpcomingTask
-HealthOverview
-DashboardNotification
-```
-
-Do not use `any` unless absolutely unavoidable.
-
-Keep the types reusable for future API integration.
-
----
-
-# 15. SIDEBAR AND NAVIGATION
-
-Review the existing Sidebar and Navigation while implementing the Dashboard.
-
-Do not rebuild it unnecessarily.
-
-Improve it only if needed for:
-
-* Better visual hierarchy
-* Active Dashboard state
-* Better spacing
-* Better responsive behavior
-* Better usability
-* Consistent icons
-* Better mobile navigation
-
-Current product areas should remain consistent with the existing application architecture.
-
-Do not invent new modules.
-
-Do not rename existing modules unless there is a strong reason.
-
----
-
-# 16. RESPONSIVE DESIGN
-
-The Dashboard must work correctly on:
-
-### Desktop
-
-Multi-column layout.
-
-### Tablet
-
-Reduced columns with appropriate stacking.
-
-### Mobile
-
-Single-column layout.
-
-Pay special attention to:
-
-* Cards
-* Charts
-* Tables/lists
-* Sidebar
-* Header
-* Text wrapping
-* Padding
-* Horizontal overflow
-
-There must be:
-
-**NO horizontal scrolling caused by the Dashboard.**
-
-Do not simply shrink everything.
-
-Reflow the layout intelligently.
-
----
-
-# 17. LOADING STATE
-
-Create a polished Dashboard loading state.
-
-If the project already has Skeleton components, reuse them.
-
-Otherwise create minimal reusable skeleton UI.
-
-The loading state should represent:
-
-* Summary cards
-* Main chart
-* Task list
-* Health section
-* Notifications
-
-Avoid a generic full-page spinner when a skeleton would provide better UX.
-
----
-
-# 18. EMPTY STATE
-
-Handle empty data gracefully.
-
-Example:
-
-```text
-No upcoming tasks
-
-You're all caught up.
-```
-
-Do not make empty states look like errors.
-
----
-
-# 19. ERROR STATE
-
-Create a clean Dashboard error state.
-
-Example:
-
-```text
-Something went wrong
-
-We couldn't load the dashboard data.
-
-Try again
-```
-
-Even though data is mocked, structure the UI so it can support real API errors later.
-
----
-
-# 20. ACCESSIBILITY
-
-Maintain good accessibility.
-
-Ensure:
-
-* Semantic HTML
-* Proper headings
-* Labels
-* Keyboard navigation
-* Visible focus states
-* Accessible buttons
-* Accessible chart information where possible
-* Good contrast
-* No information communicated by color alone
-
-Do not sacrifice accessibility for visual design.
-
----
-
-# 21. VISUAL DESIGN REVIEW
-
-After implementation, do not stop when the code compiles.
-
-Perform a visual review of the Dashboard.
-
-Check:
-
-### Typography
-
-* Page title hierarchy
-* Card titles
-* Values
-* Supporting text
-* Table/list text
-
-### Spacing
-
-* Section spacing
-* Card padding
-* Grid gaps
-* Alignment
-
-### Layout
-
-* Consistent widths
-* Balanced columns
-* No awkward empty spaces
-* No crowded areas
-
-### Colors
-
-* Consistent SmartHorse palette
-* Meaningful status colors
-* Avoid excessive colors
-
-### Components
-
-* Consistent border radius
-* Consistent shadows
-* Consistent buttons
-* Consistent icons
-
-### Responsive
-
-Review:
-
-* Desktop
-* Tablet
-* Mobile
-
-The Dashboard should look intentionally designed, not automatically generated from a grid.
-
----
-
-# 22. UX PRINCIPLE
-
-Always ask:
-
-> "If a farm owner opens this page for the first time, can they understand what is happening within a few seconds?"
-
-If not, simplify the interface.
-
-Do not add UI just because it looks impressive.
-
-Every element must have a purpose.
-
----
-
-# 23. DO NOT OVER-DESIGN
-
-This is extremely important.
-
-Do not turn the Dashboard into:
-
-* A giant analytics platform
-* A dense enterprise admin panel
-* A colorful gaming interface
-* A marketing landing page
-* A futuristic AI dashboard
-
-SmartHorse should feel:
-
-**Calm, professional, trustworthy, simple, and practical.**
-
----
-
-# 24. TESTING
-
-Add or update tests according to the existing project testing strategy.
-
-At minimum test:
-
-* Dashboard renders
-* Summary cards render
-* Mock data is displayed
-* Upcoming tasks render
-* Notifications render
-* Loading state
-* Empty state if applicable
-* Error state if applicable
-* Responsive-sensitive behavior where practical
-* Existing Phase A tests remain passing
-
-Do not remove existing tests just to make the new phase pass.
-
----
-
-# 25. CODE QUALITY
-
-Follow the project's existing:
-
-* TypeScript configuration
-* ESLint
-* Prettier
-* Naming conventions
-* Component conventions
-* Folder structure
-* Testing conventions
-
-Keep components reasonably small.
-
-Avoid unnecessary abstractions.
-
-Avoid unnecessary global state.
-
-Avoid duplicated UI logic.
-
-Avoid magic numbers where practical.
-
-Do not introduce dependencies unless they are genuinely necessary.
-
----
-
-# 26. IMPORTANT ARCHITECTURE RULE
-
-The Dashboard is currently frontend-only.
-
-The future architecture should remain:
-
-```text
-Dashboard UI
-      ↓
-Dashboard Feature Logic
-      ↓
-Dashboard Service
-      ↓
-Future /api/v1/dashboard
-      ↓
-Backend
-      ↓
-Database
-```
-
-For this phase:
-
-```text
-Dashboard UI
-      ↓
-Dashboard Service
-      ↓
-Mock Data
-```
-
-Do not bypass this abstraction by scattering mock data throughout components.
-
----
-
-# 27. DO NOT BREAK PHASE A
-
-After implementation, verify that:
-
-* Login still works
-* Register still works
-* Forgot Password still works
-* Reset Password still works
-* Existing routing still works
-* Existing Sidebar still works
-* Existing Topbar still works
-* Existing styles remain consistent
-* Existing tests remain passing
-
-Do not rewrite Phase A unnecessarily.
-
----
-
-# 28. DO NOT IMPLEMENT PHASE C
-
-This is strictly Phase B.
-
-Do NOT start implementing:
-
-* Horse Management
-* Horse CRUD
-* Medical Management
-* Training Management
-* Tasks Management
-* Marketplace
+* Dashboard
+* Inventory
+* Expenses
+* Cashier
+* Delivery
 * Reports
-* Backend
-* Database
-* Real API integration
-
-You may create UI navigation links/placeholders that already exist in the project, but do not implement their business functionality.
-
----
-
-# 29. FINAL VALIDATION
-
-Before finishing, run the appropriate project checks.
-
-At minimum:
-
-```text
-Install/dependency validation if needed
-TypeScript/type checking
-Lint
-Tests
-Production build
-```
-
-Fix issues caused by your implementation.
-
-Do not hide errors.
-
----
-
-# 30. FINAL REPORT
-
-When you finish, report clearly:
-
-### 1. Existing project inspected
-
-Confirm that you inspected the provided Phase A project before modifying it.
-
-### 2. Files created
-
-List important new files.
-
-### 3. Files modified
-
-List important modified files.
-
-### 4. Dashboard features
-
-Explain:
-
-* Header
-* Summary cards
-* Horse Activity
-* Upcoming Tasks
-* Health Overview
+* Audit
 * Notifications
-* Quick Actions if implemented
-* Loading state
-* Empty state
-* Error state
+* Settings
 
-### 5. Mock architecture
+Shared:
 
-Explain where the Mock Data lives and how it can later be replaced by an API.
+* Core infrastructure
+* Shared types
+* API conventions
+* Localization
+* UI primitives
+* Authentication contract
+* Branch context
+* Error format
+* Audit conventions
+* Testing infrastructure
 
-### 6. Responsive behavior
+Clearly document which files/directories belong to which owner.
 
-Confirm Desktop / Tablet / Mobile behavior.
+## REQUIRED PHASE 00 OUTPUT
 
-### 7. Testing
+Create a clean structure similar to:
 
-Report:
+docs/
+contracts/
+api/
+schemas/
+enums/
+events/
+examples/
 
-* Type checking
-* Lint
-* Tests
-* Build
+frontend/
+contracts/
 
-### 8. Phase A regression
+backend/
+contracts/
 
-Confirm that Phase A functionality still works.
+The exact structure may be adjusted if you have a stronger reason, but document the decision.
 
-### 9. Dependencies
+Create the necessary contract files.
 
-List any new dependencies added and explain why.
+At minimum, provide:
 
-### 10. Important decisions
+* entity/domain contract
+* enum contract
+* API contract
+* error contract
+* authentication contract
+* branch context contract
+* order lifecycle contract
+* payment contract
+* cashier shift contract
+* inventory contract
+* delivery contract
+* kitchen contract
+* printing contract
+* notification contract
+* audit contract
+* reporting contract
+* TypeScript shared contract definitions
+* database relationship/domain map
+* module ownership map
 
-Mention any UX/design decisions that were necessary.
+## SINGLE SOURCE OF TRUTH RULE
 
----
+Do NOT create another competing master specification.
 
-# 31. STOP CONDITION
+`RESTAURANT_SYSTEM_MASTER_SPEC.md` remains the project-level requirements authority.
 
-When Phase B is complete:
+Phase 00 documents are technical contracts derived from it.
 
-**STOP.**
+If you discover a requirement conflict or ambiguity:
 
-Do not continue to Phase C.
+1. Do not silently invent a business rule.
+2. Document the ambiguity.
+3. Prefer the least-complex MVP-compatible interpretation.
+4. Mark it clearly as a decision requiring confirmation.
 
-Do not implement additional modules.
+## QUALITY REQUIREMENTS
 
-Wait for my visual review and approval.
+Before finishing:
 
-The success criteria for this phase are:
+* inspect every created file
+* check for duplicate entities
+* check naming consistency
+* check enum consistency
+* check branch scoping
+* check money types
+* check order/payment relationships
+* check ownership boundaries
+* check that Person 1 and Person 2 can work independently
+* check that contracts do not depend on implementation details
+* validate JSON/YAML where applicable
+* run available static validation
+* do not leave placeholder TODOs pretending to be completed contracts
 
-> The SmartHorse Dashboard looks professional, clean, simple, intuitive, responsive, and production-quality from a frontend/UX perspective while using Mock Data and preserving the existing Phase A architecture.
+Do not modify or delete the Master Spec unless absolutely necessary.
+If a requirement needs clarification, document it instead.
+
+## GIT RULES
+
+Work ONLY on:
+
+`phase-00-foundation`
+
+Do not push to `main`.
+
+Do not create unrelated application code.
+
+At the end provide:
+
+1. Exact files created/modified
+2. Architecture summary
+3. Contract summary
+4. Ownership summary
+5. Any unresolved decisions
+6. Validation/test results
+7. Recommended next phase
+
+Do not merely describe what should be done.
+Actually create the Phase 00 files in the repository.
