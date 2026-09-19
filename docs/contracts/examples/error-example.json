@@ -1,0 +1,11 @@
+{
+  "error": {
+    "code": "OVERPAYMENT",
+    "message": "Payment amount exceeds the remaining balance on this order.",
+    "details": {
+      "order_id": "3fa1c2e0-1a2b-4c3d-8e4f-5a6b7c8d9e0f",
+      "remaining_balance": "20.00",
+      "attempted_amount": "50.00"
+    }
+  }
+}
