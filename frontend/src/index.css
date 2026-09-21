@@ -1,0 +1,195 @@
+/**
+ * Shared theme / global styling foundation.
+ *
+ * Desktop-first (this is a Windows POS/back-office app, not a mobile-first
+ * site — see RESTAURANT_SYSTEM_MASTER_SPEC.md). Logical properties
+ * (margin-inline, padding-inline, etc.) are used instead of left/right so
+ * the same rules work in both `dir="rtl"` (Arabic, default) and
+ * `dir="ltr"` (English) without duplicating styles — see
+ * docs/contracts/localization-contract.md.
+ *
+ * Money values must always render LTR even inside RTL text (bidi
+ * convention noted in localization-contract.md) — apply `.money` to any
+ * element displaying a formatted amount once a module needs it.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Palette: neutral, professional back-office tone rather than a
+     consumer/dine-in aesthetic. */
+  --color-bg: #f5f6f8;
+  --color-surface: #ffffff;
+  --color-border: #d9dce1;
+  --color-text: #1c1f26;
+  --color-text-muted: #5a6270;
+  --color-primary: #1f5e46;
+  --color-primary-contrast: #ffffff;
+  --color-secondary: #e8eaed;
+  --color-secondary-contrast: #1c1f26;
+  --color-danger: #b3261e;
+  --color-danger-contrast: #ffffff;
+  --color-focus-ring: #4a90e2;
+
+  --font-family-base:
+    "Segoe UI", Tahoma, "Noto Sans Arabic", system-ui, -apple-system, sans-serif;
+  --font-size-base: 15px;
+  --line-height-base: 1.5;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 16px;
+  --space-4: 24px;
+  --space-5: 32px;
+
+  --radius-sm: 4px;
+  --radius-md: 8px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-family-base);
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+}
+
+/* Numbers/money stay LTR even inside RTL text. */
+.money,
+[dir="rtl"] .money {
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-focus-ring);
+  outline-offset: 2px;
+}
+
+a {
+  color: var(--color-primary);
+}
+
+/* --- Shared UI primitives --- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-block: var(--space-2);
+  padding-inline: var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.btn--primary {
+  background: var(--color-primary);
+  color: var(--color-primary-contrast);
+}
+
+.btn--secondary {
+  background: var(--color-secondary);
+  color: var(--color-secondary-contrast);
+  border-color: var(--color-border);
+}
+
+.btn--danger {
+  background: var(--color-danger);
+  color: var(--color-danger-contrast);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* --- App shell --- */
+
+.app-shell {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-shell__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-inline: var(--space-4);
+  padding-block: var(--space-3);
+  background: var(--color-surface);
+  border-block-end: 1px solid var(--color-border);
+}
+
+.app-shell__brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.app-shell__content {
+  flex: 1;
+  padding: var(--space-4);
+}
+
+/* --- Boundaries (loading / error / not-found / foundation check) --- */
+
+.app-boundary {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  max-width: 480px;
+  margin-inline: auto;
+  margin-block-start: var(--space-5);
+  padding: var(--space-4);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.app-boundary__title {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.app-boundary__body {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.app-boundary__spinner {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 3px solid var(--color-border);
+  border-block-start-color: var(--color-primary);
+  animation: app-boundary-spin 0.8s linear infinite;
+}
+
+@keyframes app-boundary-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
