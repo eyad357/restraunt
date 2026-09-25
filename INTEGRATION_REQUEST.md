@@ -267,3 +267,132 @@ None of items 5–11 required editing `backend/`, `frontend/contracts/`,
 module owns responsibility for (per money-contract.md); everything else
 is contained inside `frontend/src/modules/orders/`.
 
+---
+
+# P1-FE-05 (Menu) — additional items
+
+Same discipline as above. This phase confirms and significantly extends
+item 7 from P1-FE-04 (the missing menu-catalog endpoint) — Menu is the
+module directly affected, being the "authoritative management surface"
+for the same entities Orders can only browse read-only.
+
+## 12. No menu-management endpoint exists at all (read OR write)
+
+**Gap:** Confirmed again, more thoroughly this time: grepped the entire
+`docs/` tree for `/categories`, `/products`, `/variants`, `/modifiers`
+and read `domain-entities.md`'s full Category/Product/Variant/Modifier
+section. The canonical entity SHAPES are confirmed
+(`frontend/contracts/entities.ts`: `Category { id, name, sort_order,
+is_active }`, `Product { id, category_id, name, base_price, is_active }`,
+`Variant { id, product_id, name, price, is_default }`, `Modifier { id,
+product_id, name, price_delta, is_active }`), but no read or write
+endpoint for any of them is documented anywhere.
+
+**Workaround shipped:** `modules/menu/services/menuService.ts` defines
+the `MenuService` boundary (list/create/update for all four entities).
+The shipped default (`UnavailableMenuService`) never calls any endpoint —
+every Menu page shows "menu management isn't available yet," never fake
+categories/products. A second implementation
+(`ExperimentalHttpMenuService`), calling proposed-but-unconfirmed REST
+endpoints (`GET/POST /categories`, `PATCH /categories/{id}`, `GET/POST
+/products`, `PATCH /products/{id}`, `GET/POST /products/{id}/variants`,
+`PATCH /variants/{id}`, `GET/POST /products/{id}/modifiers`, `PATCH
+/modifiers/{id}`), exists only for this phase's own interactive QA,
+gated behind `VITE_MENU_EXPERIMENTAL_API=1` (unset by default, not in
+the committed `.env.example`) — same isolation pattern as P1-FE-04 item 7.
+
+**Ask:** This is the same gap as P1-FE-04 item 7, now affecting the
+module whose entire purpose is managing these entities. Confirming a
+real menu-management API unblocks both this module and Orders' catalog
+browsing in one pass.
+
+## 13. Orders' `MenuCatalogService` and Menu's `MenuService` are two separate interfaces
+
+**Not a bug — a deliberate consequence of module ownership rules.**
+`modules/orders/services/menuCatalogService.ts` (read-only, built in
+P1-FE-04) and `modules/menu/services/menuService.ts` (full CRUD, this
+phase) are separate, module-local interfaces, even though they overlap
+significantly (both read Category/Product/Variant/Modifier). This
+phase's own instructions say "do NOT modify Orders unless absolutely
+necessary," so Menu does not reach into Orders' module to unify them.
+Both already import the same canonical entity types from
+`frontend/contracts/entities.ts` — nothing about the entities themselves
+is duplicated, only the small service-interface shape.
+
+**Ask:** Once a real menu API exists, consider whether the read-only
+subset (list categories/products/variants/modifiers) is worth promoting
+to a genuinely shared boundary (e.g. under `src/` alongside
+`src/money/formatMoney.ts`) that both Orders and Menu import, rather than
+each module maintaining its own copy. That would be a shared-file change
+requiring its own `INTEGRATION_REQUEST.md` sign-off at that time — not
+done unilaterally now.
+
+## 14. `Variant` has no `is_active` field — deactivation isn't supported
+
+**Not a gap — a confirmed, deliberate absence.** Unlike Category,
+Product, and Modifier (all of which have `is_active`), `Variant`
+(`frontend/contracts/entities.ts`) has only `is_default`, no active/
+inactive flag. The Menu module's Variant form and list therefore have no
+activate/deactivate control — this matches the canonical contract
+exactly rather than inventing one for consistency with its sibling
+entities.
+
+## 15. No documented way to atomically switch a product's default variant
+
+**Gap:** `domain-entities.md` states "Exactly one variant per product
+should be default, enforced at application layer" but documents no
+endpoint (e.g. an `actions/set-default`) for switching which variant
+holds that flag — only per-variant create/update in general.
+
+**Workaround shipped:** The Variant form lets an operator check "Default"
+on any variant they create or edit, sent as a plain field on that one
+variant's own request. This frontend does NOT attempt to auto-unset
+`is_default` on a product's other variants when one is newly marked
+default — doing so would mean either inventing a bulk-update call that
+isn't documented, or firing multiple undocumented-shape requests to
+simulate one. The UI carries a visible note explaining this isn't
+automated yet.
+
+**Ask:** Confirm whether "enforced at application layer" means the
+backend will reject/auto-correct multiple defaults server-side (in which
+case the frontend doesn't need to do anything more), or whether the
+frontend is expected to orchestrate this — and if so, via what call.
+
+## 16. No documented role restriction for menu management
+
+**Gap:** Unlike `/reports/*` (explicitly Owner-only per
+`reporting-contract.md`), no contract states whether Menu management is
+restricted to OWNER or open to CASHIER too.
+
+**Decision made, not invented:** Per this phase's own "do not invent
+additional roles/restrictions" rule, Menu management is accessible to
+both roles equally — no restriction is enforced, since none is
+documented. Worth confirming with product: a real restaurant likely
+wants pricing/menu changes restricted to Owner, but that's a product
+decision this frontend shouldn't make unilaterally by inventing a gate.
+
+## 17. Category/Product/Variant/Modifier are not branch-scoped
+
+**Not a gap — a confirmed, useful fact.** `domain-entities.md`'s own
+table for each of these four entities lists no `branch_id` field, unlike
+Order/InventoryItem/CashierShift. The Menu module therefore never sends
+a branch header or param on any call — this is a documented reading of
+an explicit contract fact, not an oversight or an invented shortcut.
+
+## 18. Small in-module navigation added (not a shared-file change)
+
+`modules/menu/components/MenuNav.tsx` — a minimal Categories/Products
+link bar rendered at the top of those two pages. The shared `AppShell`
+(frozen) has no navigation menu yet; adding one there would be a
+shared-file change outside this module's authorized scope. This is
+purely local to `modules/menu/`, listed here only for visibility, not
+because it required sign-off.
+
+---
+
+None of items 12–18 required editing `backend/`, `frontend/contracts/`,
+`docs/`, any Person 2 module, Orders, Dashboard, Auth, or any frozen
+shared foundation file. Everything is contained inside
+`frontend/src/modules/menu/`.
+
+
