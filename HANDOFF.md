@@ -1,68 +1,70 @@
 # HANDOFF.md
 
 ## Phase
-P1-FE-05 — Menu Frontend Module
+P1-FE-06 — Kitchen Frontend Module
 
 ## Owner
 Person 1
 
 ## Module
-Menu (`frontend/src/modules/menu/`)
+Kitchen (`frontend/src/modules/kitchen/`)
 
 ## Branch
 `person1/frontend`
 
 ## Implemented
 
-A production-grade Menu management workspace, protected by the existing
-auth mechanism, managing the full documented hierarchy:
+A live Kitchen operational board at `/kitchen` (protected route), built
+entirely on the frozen foundation/auth work. Unlike Menu (P1-FE-05),
+Kitchen has a fully documented, real API
+(`docs/contracts/kitchen-contract.md`), so this module ships as a
+genuinely functional board against a real backend once one exists — not
+an honest-unavailable placeholder.
 
-- **`/menu`** — redirects to `/menu/categories` (Category is the top of
-  the hierarchy, the natural landing page).
-- **`/menu/categories`** — list + create/edit form (name AR/EN, sort
-  order, active/inactive).
-- **`/menu/products`** — list with a category filter + create/edit form
-  (category association, base price, active/inactive).
-- **`/menu/products/:productId`** — a single product's Variant and
-  Modifier management (both strictly product-scoped per the contract,
-  so no standalone `/menu/variants` or `/menu/modifiers` route exists —
-  a deliberate, documented deviation from the task's own "suggested
-  ONLY if consistent with contracts" route list).
-
-Every list/form has independent loading/success/empty/error+retry and a
-submitting state that blocks duplicate submission.
+- **Three live columns** — Received, Preparing, Ready — using the exact
+  `KitchenStatus` values from `frontend/contracts/enums.ts`. COMPLETED
+  tickets are excluded from the active board by design (the contract's
+  own "live kitchen board" framing).
+- **Each ticket card** independently fetches its own order (a
+  `KitchenTicket` only carries `order_id`, not items/notes/modifiers),
+  so one slow or failing lookup never blocks the rest of the board.
+  Cards show order type/source, items with modifiers and item notes,
+  order-level notes, and received time.
+- **Column-appropriate action** per card: Start preparing / Mark ready /
+  Complete, each with its own submitting/disabled state.
+- **Delivery completion gate**: for a DELIVERY order not yet
+  `DeliveryInfo.status = DELIVERED`, the Complete button is disabled
+  with a clear explanatory note, exactly matching
+  `order-lifecycle-contract.md`'s documented rule — verified in QA to
+  both block the gated case and allow a non-delivery order through.
+- No polling/realtime — none is documented for this endpoint; staff use
+  the board's own manual retry.
 
 ## Files added/modified
 
-**New** (all under `frontend/src/modules/menu/`):
+**New** (all under `frontend/src/modules/kitchen/`):
 ```
-index.ts, routes.tsx
-types/menu.ts
-services/menuService.ts
-hooks/{useAsyncData,useMutation,useMenuQueries,useMenuMutations,
-       useMenuTranslation}.ts
+index.ts
+types/kitchen.ts
+services/kitchenApi.ts
+hooks/{useAsyncData,useMutation,useKitchenBoard,useOrderForTicket,
+       useTicketActions,useKitchenTranslation}.ts
 translations/{en,ar}.ts
-components/{SectionState,ActiveBadge,MenuNav,MenuUnavailable,
-            CategoryForm,CategoryList,ProductForm,ProductList,
-            VariantForm,VariantList,ModifierForm,ModifierList}.tsx
-pages/{CategoriesPage,ProductsPage,ProductDetailsPage,menu.css}
+components/{SectionState,KitchenColumn,KitchenTicketCard}.tsx
+pages/{KitchenPage.tsx,kitchen.css}
 ```
 
 **Modified:**
-- `frontend/src/modules/menu/routes.tsx` — real route registration (was
-  an empty skeleton).
-- `INTEGRATION_REQUEST.md` — extended with 7 new items (12–18).
+- `frontend/src/modules/kitchen/routes.tsx` — real route registration
+  (was an empty skeleton).
+- `INTEGRATION_REQUEST.md` — extended with one new item (19).
 
-No `backend/`, `docs/`, `frontend/contracts/`, Orders, Dashboard, Auth,
-Kitchen/Cashier/Inventory/Delivery/Expenses/Reports/Settings module, or
-shared foundation file (bootstrap, router, API client, AuthContext,
-ProtectedRoute, LocaleContext, shared UI primitives, global theme,
-environment config, money utility) was touched.
-
-## Shared files touched
-
-None. `src/money/formatMoney.ts` is used (for displaying `base_price`,
-variant `price`, and modifier `price_delta`) but not modified.
+No `backend/`, `docs/`, `frontend/contracts/`, Orders, Dashboard, Menu,
+Auth, Kitchen/Cashier/Inventory/Delivery/Expenses/Reports/Settings
+(Person 2) module, or shared foundation file (bootstrap, router, API
+client, AuthContext, ProtectedRoute, LocaleContext, shared UI
+primitives, global theme, environment config, money utility) was
+touched.
 
 ## Dependencies
 
@@ -70,109 +72,87 @@ None added.
 
 ## Contract dependencies
 
-- `frontend/contracts/entities.ts` — `Category`, `Product`, `Variant`,
-  `Modifier` shapes, used exactly as declared, nothing added.
-- `docs/contracts/domain-entities.md` — the prose description of each
-  entity's fields and relationships (e.g. "variant price overrides base
-  price, does not add to it"; "exactly one variant should be default").
-- `docs/contracts/api/api-contract.md` — generic REST/pagination
-  envelope conventions (used only by the isolated experimental adapter,
-  never the shipped default).
-- `src/money/formatMoney.ts` — for all price display.
+- `docs/contracts/kitchen-contract.md` — `GET /kitchen-tickets`, the
+  three ticket actions, the live-board framing, the delivery completion
+  gate.
+- `docs/contracts/order-lifecycle-contract.md` — confirms the
+  `READY → COMPLETED` delivery gate for `DELIVERY` orders.
+- `docs/contracts/branch-context-contract.md` — branch-omission
+  convention (no header/param sent).
+- `frontend/contracts/entities.ts` — `KitchenTicket`, `Order`,
+  `OrderItem`, `OrderItemModifier`, `DeliveryInfo` shapes, imported
+  as-is.
+- `frontend/contracts/enums.ts` — `KitchenStatus`, `OrderType`,
+  `OrderSource`, `DeliveryStatus`.
 
-## API assumptions (see `INTEGRATION_REQUEST.md` items 12–17 for full detail)
+## API assumptions (see `INTEGRATION_REQUEST.md` item 19)
 
-1. **No menu-management endpoint exists at all**, read or write —
-   confirmed by grepping the entire `docs/` tree. The shipped default
-   never calls any endpoint; an isolated, opt-in-only experimental
-   adapter (proposed REST shapes, unconfirmed) exists solely for this
-   phase's own QA.
-2. Orders' read-only `MenuCatalogService` and Menu's `MenuService` are
-   intentionally separate, module-local interfaces (not a duplication
-   bug) — unifying them would require modifying Orders, out of this
-   phase's scope.
-3. `Variant` has no `is_active` field in the canonical contract (unlike
-   Category/Product/Modifier) — no deactivate control was built for it,
-   matching the contract exactly.
-4. No documented way to atomically switch a product's default variant —
-   the form lets an operator flag one variant default without
-   auto-unsetting others.
-5. No documented role restriction for menu management — both Owner and
-   Cashier have equal access, since none is documented (a decision, not
-   an invented gate).
-6. Category/Product/Variant/Modifier are confirmed **not** branch-scoped
-   per `domain-entities.md`'s own field tables — no branch header/param
-   is ever sent.
+The exact response shape of the three ticket action endpoints
+(`start`/`ready`/`complete`) is not explicitly spelled out in
+`kitchen-contract.md`. This module assumes the same resource-action
+convention already established for Orders and Menu: the action returns
+the updated `KitchenTicket` in the standard `{ data }` envelope. If
+wrong, only the three action functions in `services/kitchenApi.ts` need
+to change.
+
+`KitchenTicket` carries only `order_id` — this module reads the
+referenced order via the already-documented `GET /orders/{id}` per
+ticket rather than inventing an "expanded ticket" response shape, per
+the contract's own description of the kitchen view as a projection of
+Order/OrderItem data.
 
 ## Known limitations
 
 - **No real backend exists.** All QA used a throwaway, non-shipped mock
-  server plus the isolated experimental adapter — actual production API
-  integration is untested by construction.
-- **Menu management is completely unusable against a real backend
-  today** — every page shows the honest "unavailable" state by default,
-  verified explicitly in QA. This is not a bug; it's the correct,
-  disclosed behavior given the confirmed absence of any endpoint.
-- Once a real menu API exists, Orders' own catalog-browsing adapter
-  (`modules/orders/services/menuCatalogService.ts`) still needs to be
-  pointed at it separately — this phase did not touch Orders.
-- A product's "exactly one default variant" rule is not enforced by
-  this frontend (see API assumptions #4) — relies entirely on whatever
-  the eventual backend does.
+  server matching the documented contract shapes — actual production
+  API integration is untested by construction.
+- No polling/auto-refresh — the board only updates on load, an action's
+  own success, or a manual retry after an error. If a real-time
+  convention (websocket, SSE, polling interval) is documented later,
+  this can be added without changing the board's data-fetching
+  structure.
 - No session rehydration on page reload (a P1-FE-02 limitation,
   unchanged).
+- Product IDs are shown as truncated UUID fragments in item lists (same
+  documented gap as Orders — `OrderItem` has no product/variant display
+  name in the canonical contract).
 
 ## Validation
 
 | Command | Result |
 |---|---|
 | `npx tsc -b` (strict) | ✅ clean, no output |
-| `npm run build` | ✅ succeeds — 134 modules transformed |
+| `npm run build` | ✅ succeeds — 149 modules transformed |
 | `npm run lint` (oxlint) | ✅ 0 errors; same 3 pre-existing foundation warnings, none new |
 
 **Interactive/visual QA** (Playwright, headless Chromium, against a
 throwaway mock backend — not part of this archive or the repo):
 
-- Unauthenticated `/menu` → redirects to `/login`; successful login
-  correctly returns to `/menu/categories`.
-- Category create and edit, both verified working with no console
-  errors, in both Arabic (RTL) and English (LTR); no horizontal overflow
-  at 1280px.
-- Product creation with category association; empty-required-field
-  validation correctly blocked submission before any request was sent.
-- Product details: variant creation (price correctly shown as
-  overriding, not adding to, the base price) and modifier creation
-  (price impact correctly shown with a `+` sign), both updating the UI
-  immediately.
-- Client-side navigation between Categories and Products via the new
-  in-module nav bar.
-- **Explicitly verified the shipped default** (no experimental flag
-  set): every Menu page shows the honest "menu management isn't
-  available yet" notice — proving nothing fake ships by default.
-
-## Integration instructions
-
-1. Extract this archive into your local repo root:
-   `frontend/src/modules/menu/` and `INTEGRATION_REQUEST.md` (overwrite
-   — it now includes the P1-FE-03, P1-FE-04, and P1-FE-05 items
-   together).
-2. `cd frontend && npm install` (no new dependencies).
-3. `npm run dev`, sign in, and visit `/menu`. By default you'll see the
-   honest "unavailable" notice — this is expected until a real
-   menu-management API exists.
-4. To exercise the CRUD screens' mechanics without a backend, set
-   `VITE_MENU_EXPERIMENTAL_API=1` in a local `.env` against a test
-   server implementing the proposed (unconfirmed) REST shapes described
-   in `INTEGRATION_REQUEST.md` item 12 — never do this in a shipped/
-   production build.
+- Unauthenticated `/kitchen` → redirects to `/login`; successful login
+  correctly returns to `/kitchen`.
+- Full ticket lifecycle exercised end-to-end: Start → Mark ready →
+  Complete, with the ticket correctly disappearing from the board once
+  completed (COMPLETED isn't part of the active board).
+- Delivery gate verified both ways: a DELIVERY order not yet delivered
+  shows a disabled Complete button with the explanatory note; a
+  non-delivery READY order's Complete button is enabled and works.
+- Arabic (RTL, default) and English (LTR) both verified — correct
+  `dir`/`lang`, correct labels, no mixed-language strings; columns
+  render in a consistent Received → Preparing → Ready flow in both
+  languages (a deliberate kanban-style choice — stage progression is a
+  spatial convention independent of text direction, not something RTL
+  needs to mirror).
+- Zero console/page errors throughout.
+- No horizontal overflow at 1280px or a narrower 850px desktop width.
 
 ## Commit
 
-`2c62f32` — "feat(frontend): implement restaurant menu" — on branch
+`1b2b62c` — "feat(frontend): implement restaurant kitchen" — on branch
 `person1/frontend`. Not merged into `main`.
 
 Builds on: `8c4d158` (P1-FE-01A foundation), `52e2076` (P1-FE-02 auth),
-`01b8d56` (P1-FE-03 dashboard), `4e8991e` (P1-FE-04 orders).
+`01b8d56` (P1-FE-03 dashboard), `4e8991e` (P1-FE-04 orders), `2c62f32`
+(P1-FE-05 menu).
 
 ## Person 2 files modified
 

@@ -395,4 +395,52 @@ None of items 12–18 required editing `backend/`, `frontend/contracts/`,
 shared foundation file. Everything is contained inside
 `frontend/src/modules/menu/`.
 
+---
+
+# P1-FE-06 (Kitchen) — additional item
+
+Unlike Menu, Kitchen has a fully documented, real API
+(`docs/contracts/kitchen-contract.md`: `GET /kitchen-tickets`,
+`POST /kitchen-tickets/{id}/actions/{start|ready|complete}`) — no
+"unavailable by default" boundary was needed here. Only one minor,
+low-risk assumption surfaced:
+
+## 19. Kitchen ticket action response shape is not explicitly documented
+
+**Gap:** `kitchen-contract.md` confirms the three action endpoints exist
+and what each does (state transition, timestamps, and — for `ready` —
+firing the `ORDER_READY` notification server-side), but doesn't spell out
+the exact response body.
+
+**Workaround shipped:** `modules/kitchen/services/kitchenApi.ts` assumes
+the same resource-action convention already established for Orders
+(P1-FE-04) and Menu (P1-FE-05): the action returns the updated resource
+(`KitchenTicket`) wrapped in the standard `{ data }` envelope. If this
+assumption is wrong, only `services/kitchenApi.ts`'s three action
+functions need to change.
+
+**Ask:** Low priority — confirm the exact response shape once the
+backend implements these actions, same as the other modules' equivalent
+items.
+
+`KitchenTicket` (`frontend/contracts/entities.ts`) carries only
+`order_id`, not the order's items/notes/modifiers. Per
+`kitchen-contract.md`'s own description of the kitchen view as "a
+projection of Order.notes, OrderItem.notes, and each OrderItem's
+modifiers," this module reads the referenced order via the
+already-documented `GET /orders/{id}` per ticket, rather than inventing
+an "expanded ticket" response shape that isn't in any contract. This is
+a design choice following the contract's own wording, not a gap.
+
+No branch header/param is sent on any Kitchen call, consistent with the
+pattern established in Dashboard/Orders (a CASHIER's branch is implicit;
+an OWNER has no branch-selection data source yet, so an OWNER's board
+shows all branches — the contract's own documented default).
+
+None of the above required editing `backend/`, `frontend/contracts/`,
+`docs/`, any Person 2 module, Orders, Dashboard, Menu, Auth, or any
+frozen shared foundation file. Everything is contained inside
+`frontend/src/modules/kitchen/`.
+
+
 

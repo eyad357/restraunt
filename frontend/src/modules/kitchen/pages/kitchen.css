@@ -1,0 +1,162 @@
+/**
+ * Module-local styling, same approach as orders/dashboard/menu: reuses
+ * shared theme tokens (src/index.css); no new tone colors needed here.
+ */
+
+.kitchen-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 1400px;
+  margin-inline: auto;
+}
+
+.kitchen-header__title { margin: 0; font-size: 1.4rem; }
+.kitchen-header__subtitle { margin: var(--space-1) 0 0 0; color: var(--color-text-muted); }
+
+.kitchen-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+  align-items: start;
+}
+@media (max-width: 900px) {
+  .kitchen-board { grid-template-columns: 1fr; }
+}
+
+.kitchen-column {
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  min-width: 0;
+}
+.kitchen-column__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3) 0;
+  font-size: 1rem;
+}
+.kitchen-column__count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  padding-inline: 6px;
+  border-radius: 999px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+.kitchen-column__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.kitchen-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.kitchen-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+}
+.kitchen-card__time {
+  font-weight: 400;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.kitchen-card__meta {
+  display: flex;
+  gap: var(--space-2);
+  font-size: 0.82rem;
+  color: var(--color-text-muted);
+}
+.kitchen-card__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.kitchen-card__item {
+  display: flex;
+  gap: var(--space-2);
+  padding-block: var(--space-1);
+  border-block-start: 1px solid var(--color-border);
+}
+.kitchen-card__item:first-child { border-block-start: none; }
+.kitchen-card__item-qty { font-weight: 700; flex-shrink: 0; }
+.kitchen-card__item-body { min-width: 0; }
+.kitchen-card__modifiers {
+  margin: 2px 0 0 0;
+  padding-inline-start: 16px;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+}
+.kitchen-card__item-note {
+  margin: 2px 0 0 0;
+  font-size: 0.85rem;
+  font-style: italic;
+  color: #a15c00;
+}
+.kitchen-card__order-note {
+  margin: 0;
+  padding: var(--space-2);
+  background: color-mix(in srgb, var(--color-text-muted) 8%, transparent);
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+}
+.kitchen-card__order-error {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+.kitchen-card__actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-block-start: var(--space-1);
+}
+.kitchen-card__error {
+  margin: 0;
+  color: var(--color-danger);
+  font-size: 0.82rem;
+}
+
+.kitchen-section-state {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-4) 0;
+}
+.kitchen-section-state--error { color: var(--color-danger); }
+.kitchen-section-state__spinner {
+  width: 18px; height: 18px; border-radius: 50%;
+  border: 3px solid var(--color-border);
+  border-block-start-color: var(--color-primary);
+  animation: kitchen-spin 0.8s linear infinite;
+}
+@keyframes kitchen-spin { to { transform: rotate(360deg); } }
+
+.kitchen-empty { padding: var(--space-3); text-align: center; }
+.kitchen-empty--page { padding: var(--space-5); }
+.kitchen-empty__title { margin: 0; font-weight: 600; }
+.kitchen-empty__body { margin: var(--space-1) 0 0 0; color: var(--color-text-muted); font-size: 0.85rem; }
+.kitchen-empty-inline { color: var(--color-text-muted); font-size: 0.82rem; margin: 0; }
